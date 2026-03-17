@@ -74,7 +74,7 @@ class Student {
     return "${ApiService.baseUrl}/$profilePic";
   }
 
-  List<Guardian> get guardians {
+  List<Guardian> get parents {
     final list = <Guardian>[];
     if (family == null) return list;
     final f = family!;
@@ -100,6 +100,13 @@ class Student {
         aadhar: f.motherAadhar,
       ));
     }
+    return list;
+  }
+
+  List<Guardian> get guardians {
+    final list = <Guardian>[];
+    if (family == null) return list;
+    final f = family!;
     if (f.guardian1Name != null && f.guardian1Name!.isNotEmpty) {
       list.add(Guardian(
         name: f.guardian1Name!,

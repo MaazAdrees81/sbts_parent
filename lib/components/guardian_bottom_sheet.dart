@@ -11,11 +11,12 @@ class GuardianBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final guardians = student.guardians;
+    final parentsList = student.parents;
+    final guardiansList = student.guardians;
     final showGuardians = false.obs;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.65),
+      height: MediaQuery.of(context).size.height * 0.45,
       decoration: const BoxDecoration(
         color: kPrimaryColor,
         borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
@@ -26,31 +27,26 @@ class GuardianBottomSheet extends StatelessWidget {
               const SizedBox(height: 12),
               Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.4), borderRadius: kBorderRadius4)),
               const SizedBox(height: 16),
-              // Toggle
               _Toggle(
                 isGuardian: showGuardians.value,
                 onChanged: (val) => showGuardians.value = val,
               ),
               const SizedBox(height: 16),
-              // Content
-              if (!showGuardians.value && student.parentName != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _ContactCard(
-                    name: student.parentName!,
-                    subtitle: student.parentEmail,
-                    mobile: student.parentMobile,
-                  ),
-                ),
-              if (showGuardians.value && guardians.isNotEmpty)
-                Flexible(
-                  child: ListView.builder(
+              Flexible(
+                child: Builder(builder: (_) {
+                  final list = !showGuardians.value ? parentsList : guardiansList;
+                  final maxCount = !showGuardians.value ? 2 : 2;
+                  final count = list.isEmpty ? maxCount : list.length;
+                  return ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: guardians.length,
-                    itemBuilder: (_, i) => _GuardianCard(guardian: guardians[i]),
-                  ),
-                ),
+                    itemCount: count,
+                    itemBuilder: (_, i) => i < list.length
+                        ? _PersonCard(person: list[i])
+                        : const _NaCard(),
+                  );
+                }),
+              ),
               SizedBox(height: MediaQuery.of(context).viewPadding.bottom + 32),
             ],
           )),
@@ -114,56 +110,14 @@ class _Toggle extends StatelessWidget {
   }
 }
 
-class _ContactCard extends StatelessWidget {
-  const _ContactCard({required this.name, this.subtitle, this.mobile});
-  final String name;
-  final String? subtitle;
-  final String? mobile;
+class _PersonCard extends StatelessWidget {
+  const _PersonCard({required this.person});
+  final Guardian person;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(topRight: Radius.circular(40), bottomRight: Radius.circular(6), topLeft: Radius.circular(6), bottomLeft: Radius.circular(6)),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(radius: 24, backgroundColor: kLightGrey, child: Icon(Icons.person, color: kGrey)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: kBlack)),
-                if (subtitle != null && subtitle!.isNotEmpty) Text(subtitle!, style: const TextStyle(fontSize: 12, color: kGrey)),
-                if (mobile != null && mobile!.isNotEmpty) Text(mobile!, style: const TextStyle(fontSize: 12, color: kGrey)),
-              ],
-            ),
-          ),
-          if (mobile != null && mobile!.isNotEmpty)
-            GestureDetector(
-              onTap: () => launchUrl(Uri.parse("tel:$mobile")),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(color: kGreen, borderRadius: kBorderRadius8),
-                child: Text(mobile!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GuardianCard extends StatelessWidget {
-  const _GuardianCard({required this.guardian});
-  final Guardian guardian;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
+      height: 100,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: const BoxDecoration(
@@ -175,32 +129,71 @@ class _GuardianCard extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor: kLightGrey,
-            backgroundImage: guardian.photo != null ? NetworkImage(guardian.photo!) : null,
-            child: guardian.photo == null ? const Icon(Icons.person, color: kGrey) : null,
+            backgroundImage: person.photo != null ? NetworkImage(person.photo!) : null,
+            child: person.photo == null ? const Icon(Icons.person, color: kGrey) : null,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(guardian.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: kBlack)),
-                Text(guardian.relation, style: const TextStyle(fontSize: 12, color: kDarkGrey)),
-                if (guardian.email != null && guardian.email!.isNotEmpty)
-                  Text(guardian.email!, style: const TextStyle(fontSize: 12, color: kGrey)),
-                if (guardian.occupation != null && guardian.occupation!.isNotEmpty)
-                  Text(guardian.occupation!, style: const TextStyle(fontSize: 12, color: kGrey)),
+                Text(person.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: kBlack)),
+                Text(person.relation, style: const TextStyle(fontSize: 12, color: kDarkGrey)),
+                if (person.email != null && person.email!.isNotEmpty)
+                  Text(person.email!, style: const TextStyle(fontSize: 12, color: kGrey), overflow: TextOverflow.ellipsis),
+                if (person.occupation != null && person.occupation!.isNotEmpty)
+                  Text(person.occupation!, style: const TextStyle(fontSize: 12, color: kGrey), overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
-          if (guardian.mobile != null && guardian.mobile!.isNotEmpty)
+          if (person.mobile != null && person.mobile!.isNotEmpty)
             GestureDetector(
-              onTap: () => launchUrl(Uri.parse("tel:${guardian.mobile}")),
+              onTap: () => launchUrl(Uri.parse("tel:${person.mobile}")),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(color: kGreen, borderRadius: kBorderRadius8),
-                child: Text(guardian.mobile!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                child: Text(person.mobile!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NaCard extends StatelessWidget {
+  const _NaCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(topRight: Radius.circular(40), bottomRight: Radius.circular(6), topLeft: Radius.circular(6), bottomLeft: Radius.circular(6)),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(radius: 24, backgroundColor: kLightGrey, child: Icon(Icons.person, color: kGrey)),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("N/A", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: kBlack)),
+                Text("N/A", style: TextStyle(fontSize: 12, color: kDarkGrey)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(color: kGrey, borderRadius: kBorderRadius8),
+            child: const Text("N/A", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+          ),
         ],
       ),
     );
